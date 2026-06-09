@@ -80,11 +80,14 @@ Após a descoberta, a comunicação ocorre diretamente entre os peers através d
 * Trabalhar com programação concorrente e comunicação em rede
 * Implementar tolerância a falhas e reconexão automática
 
-## Equipe
+## Integrantes
 
 | Nome | Github |
+|------|--------|
 | Carlos Eduardo Pires Gomes | @carlosk25 |
 | Dannyeclisson Rodrigo Martins da Costa | @  |
 | Augusto Queiroz Alves Silva | @ |
 
-Projeto desenvolvido para a disciplina de Redes de Computadores da Universidade de Brasília (UnB).
+## Disciplina
+Redes de Computadores  
+Universidade de Brasília (UnB)
