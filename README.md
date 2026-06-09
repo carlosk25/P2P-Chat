@@ -85,7 +85,7 @@ Após a descoberta, a comunicação ocorre diretamente entre os peers através d
 | Nome | Github |
 |------|--------|
 | Carlos Eduardo Pires Gomes | @carlosk25 |
-| Dannyeclisson Rodrigo Martins da Costa | @  |
+| Dannyeclisson Rodrigo Martins da Costa | @dannyeclisson |
 | Augusto Queiroz Alves Silva | @ |
 
 ## Disciplina
