@@ -86,7 +86,7 @@ Após a descoberta, a comunicação ocorre diretamente entre os peers através d
 |------|--------|
 | Carlos Eduardo Pires Gomes | @carlosk25 |
 | Dannyeclisson Rodrigo Martins da Costa | @dannyeclisson |
-| Augusto Queiroz Alves Silva | @ |
+| Augusto Queiroz Alves Silva | @augustoqas |
 
 ## Disciplina
 Redes de Computadores  
