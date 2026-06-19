@@ -20,3 +20,21 @@
 #responder HELLO_OK
 #guardar sockets conectados
 #fechar conexões
+
+import socket
+import threading
+import json
+import logging
+from typing import Dict, Optional
+
+
+class PeerConnectionManager:
+    def __init__(self, my_peer_id: str, listen_host: str, listen_port: int):
+        self.my_peer_id = my_peer_id
+        self.listen_host = listen_host
+        self.listen_port = listen_port
+
+        self.server_socket: Optional[socket.socket] = None
+        self.connections: Dict[str, socket.socket] = {}
+
+        self.running = False
