@@ -1,0 +1,1 @@
+#armazenamento dos peers conhecidos
