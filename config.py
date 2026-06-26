@@ -38,20 +38,20 @@ class Config:
         with open(path, "r", encoding="utf-8") as f:
             data = json.load(f)
 
-        for required in ("name", "namespace", "listen_port"):
+        for required in ("name", "namespace", "port"):
             if required not in data:
                 raise ValueError(f"config.json: campo obrigatório ausente: '{required}'")
 
         return cls(
             name=data["name"],
             namespace=data["namespace"],
-            listen_port=int(data["listen_port"]),
+            listen_port=int(data["port"]),                                    # "port" no JSON
             app_name=data.get("app_name", "pyp2p-chat"),
-            rdv_host=data.get("rdv_host", "pyp2p.mfcaetano.cc"),
-            rdv_port=int(data.get("rdv_port", 8080)),
+            rdv_host=data.get("rendezvous_host", "pyp2p.mfcaetano.cc"),      # "rendezvous_host" no JSON
+            rdv_port=int(data.get("rendezvous_port", 8080)),                  # "rendezvous_port" no JSON
             listen_host=data.get("listen_host", "0.0.0.0"),
             discover_interval=int(data.get("discover_interval", 20)),
-            keepalive_interval=int(data.get("keepalive_interval", 30)),
+            keepalive_interval=int(data.get("ping_interval", 30)),            # "ping_interval" no JSON
             rdv_ttl=int(data.get("rdv_ttl", 3600)),
             fixed_msg_ttl=int(data.get("fixed_msg_ttl", 1)),
             log_level=data.get("log_level", "INFO"),

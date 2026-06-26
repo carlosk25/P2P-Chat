@@ -1,6 +1,6 @@
 {
-  "app_name": "pyp2p-chat",
-  "name": "Augusto",
+  "app_name": "P2P-Chat",
+  "name": "Grupo14",
   "namespace": "UnB",
   "port": 5000,
   "rendezvous_host": "pyp2p.mfcaetano.cc",
