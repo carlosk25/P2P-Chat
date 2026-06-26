@@ -1,0 +1,18 @@
+{
+  "app_name": "pyp2p-chat",
+  "name": "Augusto",
+  "namespace": "UnB",
+  "port": 5000,
+  "rendezvous_host": "pyp2p.mfcaetano.cc",
+  "rendezvous_port": 8080,
+  "listen_host": "0.0.0.0",
+  "discover_interval": 20,
+  "ping_interval": 30,
+  "rdv_ttl": 3600,
+  "fixed_msg_ttl": 1,
+  "log_level": "INFO",
+  "features": ["ack", "metrics"],
+  "autonomous_mode": false,
+  "max_reconnect_attempts": 5,
+  "ack_timeout": 5
+}
