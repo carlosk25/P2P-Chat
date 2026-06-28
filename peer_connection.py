@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 ##controle das conexões TCP e mensagens entre peers
 
 #1. conexões inbound
@@ -445,6 +450,7 @@ class PeerConnectionManager:
     # ---------------------------------------------------------------------
 
     def _build_hello(self) -> dict:
+        """Monta HELLO do handshake; usa my_peer_id/features e retorna dict."""
         return {
             "type": "HELLO",
             "peer_id": self.my_peer_id,
@@ -454,6 +460,7 @@ class PeerConnectionManager:
         }
 
     def _build_hello_ok(self) -> dict:
+        """Monta HELLO_OK de resposta; usa my_peer_id/features e retorna dict."""
         return {
             "type": "HELLO_OK",
             "peer_id": self.my_peer_id,
@@ -463,6 +470,7 @@ class PeerConnectionManager:
         }
 
     def _validate_hello(self, message: dict) -> None:
+        """Valida HELLO recebido; le campos obrigatorios e retorna None ou levanta ValueError."""
         if message.get("type") != "HELLO":
             raise ValueError("primeira mensagem precisa ser HELLO")
         if not message.get("peer_id"):
@@ -471,6 +479,7 @@ class PeerConnectionManager:
             raise ValueError("HELLO precisa ter ttl = 1")
 
     def _validate_hello_ok(self, message: dict) -> None:
+        """Valida HELLO_OK recebido; le campos obrigatorios e retorna None ou levanta ValueError."""
         if message.get("type") != "HELLO_OK":
             raise ValueError("resposta do handshake precisa ser HELLO_OK")
         if not message.get("peer_id"):
@@ -526,6 +535,7 @@ class PeerConnectionManager:
     # ---------------------------------------------------------------------
 
     def is_connected(self, peer_id: str) -> bool:
+        """Verifica conexao ativa; consulta connections com lock e retorna bool."""
         with self.connections_lock:
             return peer_id in self.connections
 
@@ -601,6 +611,7 @@ class PeerConnectionManager:
             self._close_connection_object(old_connection)
 
     def _remove_connection(self, peer_id: str, connection: PeerConnection) -> None:
+        """Remove e fecha conexao; chama _close_connection_object/_notify_disconnect e retorna None."""
         removed = False
 
         with self.connections_lock:
@@ -616,6 +627,7 @@ class PeerConnectionManager:
             self._notify_disconnect(peer_id)
 
     def _close_connection_object(self, connection: PeerConnection) -> None:
+        """Fecha reader e socket de uma conexao; chama _close_socket e retorna None."""
         try:
             connection.reader.close()
         except Exception:
@@ -623,6 +635,7 @@ class PeerConnectionManager:
         self._close_socket(connection.sock)
 
     def _close_socket(self, sock: socket.socket) -> None:
+        """Fecha socket com shutdown defensivo; ignora erros e retorna None."""
         try:
             sock.shutdown(socket.SHUT_RDWR)
         except Exception:
@@ -633,6 +646,7 @@ class PeerConnectionManager:
             pass
 
     def _notify_connect(self, peer_id: str) -> None:
+        """Executa callback on_connect se existir; captura excecoes e retorna None."""
         if self.on_connect is not None:
             try:
                 self.on_connect(peer_id)
@@ -640,6 +654,7 @@ class PeerConnectionManager:
                 self.logger.warning("Callback on_connect falhou para %s: %s", peer_id, exc)
 
     def _notify_disconnect(self, peer_id: str) -> None:
+        """Executa callback on_disconnect se existir; captura excecoes e retorna None."""
         if self.on_disconnect is not None:
             try:
                 self.on_disconnect(peer_id)

@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 ##armazenamento dos peers conhecidos
 # Define as estruturas de dados que representam um peer e seu estado na rede.
 
@@ -6,6 +11,8 @@ from enum import Enum
 
 
 class PeerState(Enum):
+    """Enum com os estados possiveis de um peer na PeerTable."""
+
     # Estados possíveis de um peer conhecido
     UNKNOWN = "unknown"           # descoberto pelo Rendezvous, sem tentativa de conexão ainda
     CONNECTED = "connected"       # conexão TCP ativa estabelecida
@@ -15,6 +22,8 @@ class PeerState(Enum):
 
 @dataclass
 class Peer:
+    """Dados de um peer descoberto; usado por PeerTable, CLI e conexoes."""
+
     # Representa um único peer conhecido na rede
     name: str        # identificador dentro do namespace (ex: "alice")
     namespace: str   # grupo lógico do peer (ex: "UnB")
@@ -26,9 +35,11 @@ class Peer:
 
     @property
     def peer_id(self) -> str:
+        """Monta identificador name@namespace; usa name/namespace e retorna str."""
         # Identificador único do peer no formato name@namespace (ex: "alice@UnB")
         return f"{self.name}@{self.namespace}"
 
     def __repr__(self) -> str:
+        """Gera texto legivel para logs/debug; usa campos do peer e retorna str."""
         # Representação legível para debug (ex: Peer(alice@UnB | 192.168.0.1:5000 | connected))
         return f"Peer({self.peer_id} | {self.ip}:{self.port} | {self.state.value})"

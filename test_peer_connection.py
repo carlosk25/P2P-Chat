@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 import logging
 import time
 import threading
@@ -15,19 +20,23 @@ mensagem_recebida = threading.Event()
 
 
 def on_message_alice(peer_id, message):
+    """Callback de teste da Alice; imprime mensagem, sinaliza Event e retorna None."""
     print(f"[ALICE] recebeu mensagem de {peer_id}: {message}")
     mensagem_recebida.set()
 
 
 def on_connect(peer_id):
+    """Callback de teste de conexao; imprime peer conectado e retorna None."""
     print(f"[CALLBACK] conectado com {peer_id}")
 
 
 def on_disconnect(peer_id):
+    """Callback de teste de desconexao; imprime peer desconectado e retorna None."""
     print(f"[CALLBACK] desconectado de {peer_id}")
 
 
 def main():
+    """Executa teste manual de conexao; chama PeerConnectionManager e usa asserts, retorna None."""
     alice = PeerConnectionManager(
         my_peer_id="alice@CIC",
         listen_host="127.0.0.1",

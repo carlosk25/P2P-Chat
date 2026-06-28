@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 """Main application orchestration for the P2P chat."""
 
 from __future__ import annotations
@@ -18,7 +23,10 @@ log = logging.getLogger("P2PClient")
 
 
 class P2PClient:
+    """Integra configuracao, Rendezvous, conexoes P2P, keep-alive e CLI."""
+
     def __init__(self, config_path: str = "config.json") -> None:
+        """Carrega Config e cria gerenciadores; registra callbacks e retorna None."""
         self.config = Config.from_file(config_path)
         self.peer_table = PeerTable()
         self._stop_lock = threading.RLock()
@@ -54,6 +62,7 @@ class P2PClient:
         )
 
     def start(self) -> None:
+        """Sobe servidor, registra no Rendezvous, inicia keep-alive/CLI e retorna None."""
         try:
             actual_port = self.connection_manager.start_server()
             self.config.listen_port = actual_port
@@ -67,6 +76,7 @@ class P2PClient:
             self.stop()
 
     def stop(self) -> None:
+        """Encerra CLI, timers, conexoes e unregister; chama stops em ordem e retorna None."""
         with self._stop_lock:
             if self._stopped:
                 return
@@ -98,7 +108,8 @@ class P2PClient:
             log.warning("Falha ao desregistrar no Rendezvous: %s", exc)
 
     def reconnect(self, connect_discovered: bool = True) -> None:
-        peers = rendezvous_connection.discover(self.config)
+        """Descobre peers do namespace; atualiza PeerTable, conecta quando pedido e retorna None."""
+        peers = rendezvous_connection.discover(self.config, namespace=self.config.namespace)
         self.peer_table.update_from_discovery(peers)
 
         if not connect_discovered:
@@ -107,12 +118,15 @@ class P2PClient:
         for peer in self.peer_table.get_all():
             if peer.peer_id == self.config.peer_id:
                 continue
+            if peer.namespace != self.config.namespace:
+                continue
             if self.connection_manager.is_connected(peer.peer_id):
                 continue
             if self.connection_manager.connect_to_peer(peer.peer_id, peer.ip, peer.port):
                 self.peer_table.mark_connected(peer.peer_id)
 
     def _on_message(self, peer_id: str, message: dict) -> None:
+        """Callback de mensagens P2P; despacha para MessageRouter/KeepAlive e retorna None."""
         message_type = message.get("type")
         if message_type in {"SEND", "ACK", "PUB"}:
             self.message_router.handle_message(peer_id, message)
@@ -122,7 +136,9 @@ class P2PClient:
             log.warning("Mensagem de tipo desconhecido recebida de %s: %s", peer_id, message_type)
 
     def _on_connect(self, peer_id: str) -> None:
+        """Callback de conexao aberta; chama PeerTable.mark_connected e retorna None."""
         self.peer_table.mark_connected(peer_id)
 
     def _on_disconnect(self, peer_id: str) -> None:
+        """Callback de conexao fechada; chama PeerTable.mark_disconnected e retorna None."""
         self.peer_table.mark_disconnected(peer_id)

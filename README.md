@@ -1,5 +1,13 @@
 # P2PCHAT
 
+**Grupo 12**
+
+| Integrante | Matrícula |
+| ---------- | --------- |
+| Augusto Queiroz Alves Silva | 232024302 |
+| Carlos Eduardo Pires Gomes | 232045895 |
+| Dannyeclisson Rodrigo Martins da Costa | 211061592 |
+
 P2PCHAT é um sistema de chat Peer-to-Peer (P2P) desenvolvido em Python para a disciplina de Redes de Computadores.
 
 O projeto utiliza um servidor Rendezvous para descoberta de peers e conexões TCP diretas para comunicação entre os participantes da rede. Após a descoberta inicial, as mensagens são trocadas diretamente entre os peers, sem intermediários.

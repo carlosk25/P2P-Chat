@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 """Routing for chat messages, ACKs and publications."""
 
 from __future__ import annotations
@@ -15,11 +20,14 @@ log = logging.getLogger("MessageRouter")
 
 
 def utc_now_iso() -> str:
+    """Gera timestamp UTC ISO 8601; nao chama outros modulos do projeto e retorna str."""
     return datetime.now(timezone.utc).isoformat()
 
 
 @dataclass
 class PendingAck:
+    """Registro de SEND aguardando ACK, com peer, payload, horario e timer."""
+
     peer_id: str
     payload: str
     sent_at: float
@@ -36,6 +44,7 @@ class MessageRouter:
         peer_table=None,
         output: Optional[Callable[[str], None]] = None,
     ) -> None:
+        """Inicializa dependencias e ACKs pendentes; nao envia mensagens e retorna None."""
         self.config = config
         self.connection_manager = connection_manager
         self.peer_table = peer_table
@@ -44,6 +53,7 @@ class MessageRouter:
         self._lock = threading.RLock()
 
     def build_send(self, peer_id: str, payload: str) -> dict:
+        """Monta SEND direto; chama uuid.uuid4 e retorna dict do protocolo."""
         return {
             "type": "SEND",
             "msg_id": str(uuid.uuid4()),
@@ -55,6 +65,7 @@ class MessageRouter:
         }
 
     def build_ack(self, msg_id: str) -> dict:
+        """Monta ACK para msg_id recebido; chama utc_now_iso e retorna dict."""
         return {
             "type": "ACK",
             "msg_id": msg_id,
@@ -63,6 +74,7 @@ class MessageRouter:
         }
 
     def build_pub(self, target: str, payload: str) -> dict:
+        """Monta PUB para alvo informado; chama uuid.uuid4 e retorna dict."""
         return {
             "type": "PUB",
             "msg_id": str(uuid.uuid4()),
@@ -74,6 +86,7 @@ class MessageRouter:
         }
 
     def send_direct(self, peer_id: str, payload: str) -> Optional[str]:
+        """Envia SEND; chama build_send, controle de ACK e send_to_peer, retornando msg_id ou None."""
         message = self.build_send(peer_id, payload)
         if message.get("require_ack"):
             self._register_pending_ack(message["msg_id"], peer_id, payload)
@@ -87,6 +100,7 @@ class MessageRouter:
         return message["msg_id"]
 
     def send_publication(self, target: str, payload: str) -> list[str]:
+        """Envia PUB para peers filtrados; chama _publication_recipients/send_to_peer e retorna destinatarios."""
         message = self.build_pub(target, payload)
         recipients = self._publication_recipients(target)
         sent_to: list[str] = []
@@ -104,6 +118,7 @@ class MessageRouter:
         return sent_to
 
     def handle_message(self, peer_id: str, message: dict) -> None:
+        """Despacha SEND/ACK/PUB recebido; chama handler especifico e retorna None."""
         message_type = message.get("type")
         if message_type == "SEND":
             self.handle_send(peer_id, message)
@@ -115,6 +130,7 @@ class MessageRouter:
             log.warning("MessageRouter recebeu tipo desconhecido de %s: %s", peer_id, message_type)
 
     def handle_send(self, peer_id: str, message: dict) -> None:
+        """Exibe SEND recebido e envia ACK se pedido; chama build_ack/send_to_peer e retorna None."""
         msg_id = message.get("msg_id")
         src = message.get("src", peer_id)
         payload = message.get("payload", "")
@@ -128,6 +144,7 @@ class MessageRouter:
                 log.debug("ACK enviado para %s (msg_id=%s)", peer_id, msg_id)
 
     def handle_ack(self, peer_id: str, message: dict) -> None:
+        """Remove ACK pendente; cancela timer associado e retorna None."""
         msg_id = message.get("msg_id")
         if not msg_id:
             log.warning("ACK sem msg_id recebido de %s", peer_id)
@@ -145,6 +162,7 @@ class MessageRouter:
         log.info("ACK recebido de %s (msg_id=%s, %.3fs)", peer_id, msg_id, elapsed)
 
     def handle_pub(self, peer_id: str, message: dict) -> None:
+        """Exibe PUB recebido; nao faz relay e retorna None."""
         src = message.get("src", peer_id)
         dst = message.get("dst", "*")
         payload = message.get("payload", "")
@@ -152,6 +170,7 @@ class MessageRouter:
         self.output(f"[pub {dst}] {src}: {payload}")
 
     def _register_pending_ack(self, msg_id: str, peer_id: str, payload: str) -> None:
+        """Registra espera de ACK; cria threading.Timer para _ack_timeout e retorna None."""
         timer = threading.Timer(
             float(getattr(self.config, "ack_timeout", 5)),
             self._ack_timeout,
@@ -171,6 +190,7 @@ class MessageRouter:
         timer.start()
 
     def _ack_timeout(self, msg_id: str) -> None:
+        """Loga SEND sem ACK; remove pendencia se ainda existir e retorna None."""
         with self._lock:
             pending = self.pending_acks.pop(msg_id, None)
 
@@ -185,6 +205,7 @@ class MessageRouter:
         )
 
     def _cancel_pending_ack(self, msg_id: str) -> None:
+        """Cancela ACK pendente; remove do dicionario, cancela timer e retorna None."""
         with self._lock:
             pending = self.pending_acks.pop(msg_id, None)
 
@@ -192,6 +213,7 @@ class MessageRouter:
             pending.timer.cancel()
 
     def _publication_recipients(self, target: str) -> list[str]:
+        """Calcula destinatarios de PUB; consulta conexoes/PeerTable e retorna lista de peer_id."""
         connected = set(self.connection_manager.get_connection_ids())
         if target == "*":
             return sorted(connected)
@@ -210,6 +232,7 @@ class MessageRouter:
         return sorted(peer_id for peer_id in connected if peer_id.endswith(suffix))
 
     def stop(self) -> None:
+        """Cancela timers de ACK pendentes; limpa estado interno e retorna None."""
         with self._lock:
             pending = list(self.pending_acks.values())
             self.pending_acks.clear()

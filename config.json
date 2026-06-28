@@ -1,4 +1,19 @@
 {
+  "_grupo": "Grupo 12",
+  "_integrantes": [
+    {
+      "nome": "Augusto Queiroz Alves Silva",
+      "matricula": "232024302"
+    },
+    {
+      "nome": "Carlos Eduardo Pires Gomes",
+      "matricula": "232045895"
+    },
+    {
+      "nome": "Dannyeclisson Rodrigo Martins da Costa",
+      "matricula": "211061592"
+    }
+  ],
   "app_name": "P2P-Chat",
   "name": "Grupo14",
   "namespace": "UnB",

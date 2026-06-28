@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 import logging
 import time
 import unittest
@@ -11,6 +16,8 @@ from peer_table import PeerTable
 
 @dataclass
 class FakeConfig:
+    """Config falsa para testes da Pessoa 3, sem ler arquivos JSON."""
+
     name: str = "alice"
     namespace: str = "CIC"
     listen_port: int = 5000
@@ -19,24 +26,31 @@ class FakeConfig:
 
     @property
     def peer_id(self):
+        """Monta peer_id de teste; usa name/namespace e retorna str."""
         return f"{self.name}@{self.namespace}"
 
 
 class FakeConnectionManager:
+    """Gerenciador falso que registra envios em memoria para testes unitarios."""
+
     def __init__(self, connected=None):
+        """Inicializa lista de conectados e mensagens enviadas; retorna None."""
         self.connected = list(connected or ["bob@CIC"])
         self.sent = []
 
     def send_to_peer(self, peer_id, message):
+        """Simula envio; grava mensagem se peer conectado e retorna bool."""
         if peer_id not in self.connected:
             return False
         self.sent.append((peer_id, message))
         return True
 
     def get_connection_ids(self):
+        """Retorna peers conectados simulados; nao chama rede e retorna list[str]."""
         return list(self.connected)
 
     def get_connections_info(self):
+        """Monta info fake de conexoes; usa connected e retorna list[dict]."""
         return [
             {
                 "peer_id": peer_id,
@@ -48,13 +62,17 @@ class FakeConnectionManager:
         ]
 
     def connect_to_peer(self, peer_id, host, port):
+        """Simula conexao manual; adiciona peer em connected e retorna True."""
         if peer_id not in self.connected:
             self.connected.append(peer_id)
         return True
 
 
 class Person3Tests(unittest.TestCase):
+    """Suite de testes da CLI, MessageRouter e KeepAliveManager."""
+
     def test_builds_send_ack_pub_ping_pong(self):
+        """Valida construcao de mensagens; chama builders e confere campos retornados."""
         config = FakeConfig()
         conn = FakeConnectionManager()
         router = MessageRouter(config, conn, output=lambda _: None)
@@ -88,6 +106,7 @@ class Person3Tests(unittest.TestCase):
         self.assertEqual(pong["ttl"], 1)
 
     def test_receiving_send_sends_ack(self):
+        """Valida SEND recebido; chama handle_message e espera ACK enviado."""
         config = FakeConfig()
         conn = FakeConnectionManager()
         output = []
@@ -112,6 +131,7 @@ class Person3Tests(unittest.TestCase):
         self.assertIn("[msg] bob@CIC: ola", output)
 
     def test_ack_removes_pending(self):
+        """Valida ACK recebido; chama send_direct/handle_message e verifica pendencia removida."""
         config = FakeConfig(ack_timeout=1)
         conn = FakeConnectionManager()
         router = MessageRouter(config, conn, output=lambda _: None)
@@ -124,6 +144,7 @@ class Person3Tests(unittest.TestCase):
         router.stop()
 
     def test_ack_timeout_logs_warning(self):
+        """Valida timeout de ACK; chama send_direct, aguarda timer e verifica warning."""
         config = FakeConfig(ack_timeout=0.02)
         conn = FakeConnectionManager()
         router = MessageRouter(config, conn, output=lambda _: None)
@@ -137,6 +158,7 @@ class Person3Tests(unittest.TestCase):
         router.stop()
 
     def test_publication_filters_namespace(self):
+        """Valida PUB por namespace; chama send_publication e confere destinatarios."""
         config = FakeConfig()
         conn = FakeConnectionManager(["bob@CIC", "carol@MAT"])
         table = PeerTable()
@@ -153,6 +175,7 @@ class Person3Tests(unittest.TestCase):
         self.assertEqual(conn.sent[-1][1]["type"], "PUB")
 
     def test_receiving_ping_sends_pong_and_pong_computes_rtt(self):
+        """Valida PING/PONG; chama handlers e confere RTT medio calculado."""
         config = FakeConfig()
         conn = FakeConnectionManager()
         keepalive = KeepAliveManager(config, conn)
@@ -168,6 +191,7 @@ class Person3Tests(unittest.TestCase):
         keepalive.stop()
 
     def test_cli_parses_main_commands(self):
+        """Valida comandos principais da CLI; chama handle_line e confere saidas/efeitos."""
         config = FakeConfig()
         conn = FakeConnectionManager()
         router = MessageRouter(config, conn, output=lambda _: None)

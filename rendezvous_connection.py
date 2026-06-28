@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 ##comunicação com servidor Rendezvous
 # Cada operação abre uma nova conexão TCP, envia um comando JSON, lê a resposta e fecha.
 # O servidor aceita exatamente um comando por conexão.
@@ -15,6 +20,7 @@ _MAX_LINE = 32 * 1024 # limite de 32 KiB por linha (imposto pelo servidor)
 
 
 def register(config: Config) -> None:
+    """Registra peer no Rendezvous; chama _send_command/_check_ok e retorna None."""
     # Registra o peer no servidor Rendezvous.
     # Deve ser chamado antes de discover() e unregister().
     payload = {
@@ -31,6 +37,7 @@ def register(config: Config) -> None:
 
 
 def discover(config: Config, namespace: str | None = None) -> list[dict]:
+    """Consulta peers no Rendezvous; chama _send_command/_check_ok e retorna lista de dicts."""
     # Descobre peers registrados no servidor Rendezvous.
     # Se namespace for None, retorna peers de todos os namespaces.
     # Requer REGISTER prévio, servidor retorna erro caso contrário.
@@ -49,6 +56,7 @@ def discover(config: Config, namespace: str | None = None) -> list[dict]:
 
 
 def unregister(config: Config) -> None:
+    """Remove registro do Rendezvous; chama _send_command/_check_ok e retorna None."""
     # Remove o registro do peer no servidor Rendezvous.
     # Chamado no /quit, antes de encerrar o programa.
     payload = {
@@ -65,6 +73,7 @@ def unregister(config: Config) -> None:
 # Funções internas
 
 def _send_command(host: str, port: int, payload: dict) -> dict:
+    """Envia comando JSON ao Rendezvous via socket; chama json/socket e retorna resposta dict."""
     # Abre conexão TCP, envia JSON+\n, lê resposta JSON+\n, fecha.
     # O protocolo exige \n como delimitador de mensagem.
     line = json.dumps(payload) + "\n"
@@ -99,6 +108,7 @@ def _send_command(host: str, port: int, payload: dict) -> dict:
 
 
 def _check_ok(response: dict, command: str) -> None:
+    """Valida status OK da resposta; levanta RuntimeError em erro e retorna None."""
     # Verifica se a resposta do servidor foi OK, lança erro caso contrário
     if response.get("status") != "OK":
         msg = response.get("message", "erro desconhecido")

@@ -1,3 +1,8 @@
+# Grupo 12
+# Augusto Queiroz Alves Silva - 232024302
+# Carlos Eduardo Pires Gomes - 232045895
+# Dannyeclisson Rodrigo Martins da Costa - 211061592
+
 """Interactive command-line interface for the P2P chat."""
 
 from __future__ import annotations
@@ -10,6 +15,8 @@ VALID_LOG_LEVELS = {"DEBUG", "INFO", "WARNING", "ERROR"}
 
 
 class CLI:
+    """Organiza a interface interativa e chama os gerenciadores do cliente."""
+
     def __init__(
         self,
         config,
@@ -22,6 +29,7 @@ class CLI:
         input_func: Callable[[str], str] = input,
         output_func: Callable[[str], None] = print,
     ) -> None:
+        """Guarda dependencias usadas pelos comandos; nao chama rede e retorna None."""
         self.config = config
         self.peer_table = peer_table
         self.connection_manager = connection_manager
@@ -34,6 +42,7 @@ class CLI:
         self.running = False
 
     def start(self) -> None:
+        """Inicia o loop de leitura; chama handle_line para cada entrada e retorna None."""
         self.running = True
         self.output(f"Chat P2P iniciado como {self.config.peer_id}. Use /quit para sair.")
 
@@ -48,9 +57,11 @@ class CLI:
             self.handle_line(line)
 
     def stop(self) -> None:
+        """Sinaliza parada do loop da CLI; nao chama outros modulos e retorna None."""
         self.running = False
 
     def handle_line(self, line: str) -> bool:
+        """Interpreta uma linha, chama o handler do comando e retorna se a CLI segue ativa."""
         line = line.strip()
         if not line:
             return True
@@ -92,6 +103,7 @@ class CLI:
         return self.running
 
     def _cmd_peers(self, arg: str) -> None:
+        """Lista peers da PeerTable; chama get_all/get_by_namespace e retorna None."""
         if not arg or arg == "*":
             peers = self.peer_table.get_all()
         elif arg.startswith("#") and len(arg) > 1:
@@ -109,6 +121,7 @@ class CLI:
             self.output(f"{peer.peer_id} {peer.ip}:{peer.port} {state}")
 
     def _cmd_msg(self, rest: str) -> None:
+        """Valida /msg, chama MessageRouter.send_direct e retorna None."""
         parts = rest.split(maxsplit=1)
         if len(parts) != 2 or not parts[0] or not parts[1].strip():
             self.output("Uso: /msg <peer_id> <mensagem>")
@@ -122,6 +135,7 @@ class CLI:
             self.output(f"Mensagem enviada para {peer_id} (msg_id={msg_id}).")
 
     def _cmd_pub(self, rest: str) -> None:
+        """Valida /pub, chama MessageRouter.send_publication e retorna None."""
         parts = rest.split(maxsplit=1)
         if len(parts) != 2 or not parts[1].strip():
             self.output("Uso: /pub * <mensagem> ou /pub #namespace <mensagem>")
@@ -136,6 +150,7 @@ class CLI:
         self.output(f"Publicacao enviada para {len(sent_to)} peer(s).")
 
     def _cmd_conn(self) -> None:
+        """Mostra conexoes ativas; chama get_connections_info e retorna None."""
         connections = self.connection_manager.get_connections_info()
         if not connections:
             self.output("Nenhuma conexao ativa.")
@@ -152,6 +167,7 @@ class CLI:
             )
 
     def _cmd_connect(self, rest: str) -> None:
+        """Conecta manualmente a um peer; atualiza PeerTable, chama connect_to_peer e retorna None."""
         parts = rest.split()
         if len(parts) != 3:
             self.output("Uso: /connect <peer_id> <host> <port>")
@@ -187,6 +203,7 @@ class CLI:
             self.output(f"Nao foi possivel conectar a {peer_id} em {host}:{port}.")
 
     def _cmd_rtt(self) -> None:
+        """Mostra RTT medio; chama KeepAliveManager.get_average_rtt e retorna None."""
         averages = self.keep_alive_manager.get_average_rtt()
         if not averages:
             self.output("Ainda nao ha medicoes de RTT.")
@@ -196,6 +213,7 @@ class CLI:
             self.output(f"{peer_id}: {rtt_ms:.2f} ms")
 
     def _cmd_reconnect(self) -> None:
+        """Forca discovery/conexao; chama reconnect_callback quando disponivel e retorna None."""
         if self.reconnect_callback is None:
             self.output("Reconexao nao esta disponivel neste cliente.")
             return
@@ -204,6 +222,7 @@ class CLI:
         self.output("Reconexao/discovery executado.")
 
     def _cmd_log(self, arg: str) -> None:
+        """Altera o nivel do logging raiz; chama logging.getLogger e retorna None."""
         level = arg.strip().upper()
         if level not in VALID_LOG_LEVELS:
             self.output("Nivel invalido. Use DEBUG, INFO, WARNING ou ERROR.")
@@ -213,6 +232,7 @@ class CLI:
         self.output(f"Nivel de log alterado para {level}.")
 
     def _cmd_quit(self) -> None:
+        """Encerra a CLI; chama shutdown_callback para parar o cliente e retorna None."""
         self.running = False
         self.output("Encerrando...")
         if self.shutdown_callback is not None:
