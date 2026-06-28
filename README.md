@@ -72,6 +72,83 @@ Após a descoberta, a comunicação ocorre diretamente entre os peers através d
 | `/log <nível>`                 | Ajusta o nível de log            |
 | `/quit`                        | Encerra a aplicação              |
 
+## Como usar/testar o chat
+
+Para executar um peer com o arquivo `config.json` padrão:
+
+```bash
+python main.py
+```
+
+Também é possível passar um arquivo de configuração específico:
+
+```bash
+python main.py alice.json
+python main.py bob.json
+```
+
+Exemplo de teste manual com dois peers locais:
+
+1. Crie dois arquivos de configuração, por exemplo `alice.json` e `bob.json`.
+2. Use nomes e portas diferentes em cada arquivo:
+
+```json
+{
+  "app_name": "P2P-Chat",
+  "name": "alice",
+  "namespace": "UnB",
+  "port": 5001,
+  "rendezvous_host": "pyp2p.mfcaetano.cc",
+  "rendezvous_port": 8080,
+  "listen_host": "0.0.0.0",
+  "discover_interval": 20,
+  "ping_interval": 30,
+  "rdv_ttl": 3600,
+  "fixed_msg_ttl": 1,
+  "log_level": "INFO",
+  "features": ["ack", "metrics"],
+  "autonomous_mode": false,
+  "max_reconnect_attempts": 5,
+  "ack_timeout": 5
+}
+```
+
+3. Em um terminal, inicie o primeiro peer:
+
+```bash
+python main.py alice.json
+```
+
+4. Em outro terminal, inicie o segundo peer:
+
+```bash
+python main.py bob.json
+```
+
+5. Em um dos peers, force a descoberta/conexão:
+
+```text
+/reconnect
+```
+
+6. Teste os comandos principais:
+
+```text
+/peers
+/conn
+/msg bob@UnB ola bob
+/pub * ola pessoal
+/rtt
+/quit
+```
+
+Observações:
+
+* O `peer_id` usa o formato `nome@namespace`, por exemplo `alice@UnB`.
+* O comando `/rtt` só mostra valores depois que houver troca de `PING`/`PONG`.
+* O comando `/pub *` envia para os peers conectados diretamente.
+* Com `autonomous_mode` como `false`, use `/reconnect` para descobrir e conectar peers manualmente.
+
 ## Objetivos
 
 * Aplicar conceitos de arquitetura Peer-to-Peer
