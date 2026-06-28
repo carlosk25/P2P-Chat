@@ -200,11 +200,13 @@ class MessageRouter:
             return []
 
         namespace = target[1:]
+        suffix = f"@{namespace}"
         if self.peer_table is not None:
             peers = self.peer_table.get_by_namespace(namespace)
-            return sorted(peer.peer_id for peer in peers if peer.peer_id in connected)
+            from_table = {peer.peer_id for peer in peers if peer.peer_id in connected}
+            from_connected_ids = {peer_id for peer_id in connected if peer_id.endswith(suffix)}
+            return sorted(from_table | from_connected_ids)
 
-        suffix = f"@{namespace}"
         return sorted(peer_id for peer_id in connected if peer_id.endswith(suffix))
 
     def stop(self) -> None:

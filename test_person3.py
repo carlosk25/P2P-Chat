@@ -47,6 +47,11 @@ class FakeConnectionManager:
             for peer_id in self.connected
         ]
 
+    def connect_to_peer(self, peer_id, host, port):
+        if peer_id not in self.connected:
+            self.connected.append(peer_id)
+        return True
+
 
 class Person3Tests(unittest.TestCase):
     def test_builds_send_ack_pub_ping_pong(self):
@@ -187,6 +192,7 @@ class Person3Tests(unittest.TestCase):
 
         cli.handle_line("/peers")
         cli.handle_line("/conn")
+        cli.handle_line("/connect carol@CIC 127.0.0.1 5003")
         cli.handle_line("/msg bob@CIC oi bob")
         cli.handle_line("/pub * oi todos")
         cli.handle_line("/rtt")
@@ -194,6 +200,7 @@ class Person3Tests(unittest.TestCase):
         cli.handle_line("/reconnect")
 
         self.assertTrue(any("bob@CIC" in line for line in output))
+        self.assertTrue(any("Conectado a carol@CIC" in line for line in output))
         self.assertTrue(any("Nivel de log alterado" in line for line in output))
         self.assertEqual(reconnected, [True])
         self.assertEqual(logging.getLogger().level, logging.DEBUG)

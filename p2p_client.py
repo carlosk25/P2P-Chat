@@ -98,7 +98,7 @@ class P2PClient:
             log.warning("Falha ao desregistrar no Rendezvous: %s", exc)
 
     def reconnect(self, connect_discovered: bool = True) -> None:
-        peers = rendezvous_connection.discover(self.config)
+        peers = rendezvous_connection.discover(self.config, namespace=self.config.namespace)
         self.peer_table.update_from_discovery(peers)
 
         if not connect_discovered:
@@ -106,6 +106,8 @@ class P2PClient:
 
         for peer in self.peer_table.get_all():
             if peer.peer_id == self.config.peer_id:
+                continue
+            if peer.namespace != self.config.namespace:
                 continue
             if self.connection_manager.is_connected(peer.peer_id):
                 continue

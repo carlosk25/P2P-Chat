@@ -67,6 +67,7 @@ Após a descoberta, a comunicação ocorre diretamente entre os peers através d
 | `/pub * <mensagem>`            | Envia broadcast global           |
 | `/pub #<namespace> <mensagem>` | Envia mensagem para um namespace |
 | `/conn`                        | Lista conexões ativas            |
+| `/connect <peer_id> <host> <port>` | Conecta diretamente a um peer |
 | `/rtt`                         | Exibe RTT médio dos peers        |
 | `/reconnect`                   | Força nova descoberta de peers   |
 | `/log <nível>`                 | Ajusta o nível de log            |
@@ -125,13 +126,27 @@ python main.py alice.json
 python main.py bob.json
 ```
 
-5. Em um dos peers, force a descoberta/conexão:
+5. Para testar localmente na mesma máquina, conecte diretamente um peer no outro.
+
+No terminal do `alice`, por exemplo:
+
+```text
+/connect bob@UnB 127.0.0.1 5002
+```
+
+Se estiver usando os arquivos `Dann.json` e `teste.json`, com `Danny` na porta `5001` e `Fulano` na porta `5002`, use:
+
+```text
+/connect Fulano@UnB 127.0.0.1 5002
+```
+
+6. Se quiser testar descoberta pelo servidor Rendezvous, use:
 
 ```text
 /reconnect
 ```
 
-6. Teste os comandos principais:
+7. Teste os comandos principais:
 
 ```text
 /peers
@@ -148,6 +163,7 @@ Observações:
 * O comando `/rtt` só mostra valores depois que houver troca de `PING`/`PONG`.
 * O comando `/pub *` envia para os peers conectados diretamente.
 * Com `autonomous_mode` como `false`, use `/reconnect` para descobrir e conectar peers manualmente.
+* Em testes locais na mesma máquina, prefira `/connect <peer_id> 127.0.0.1 <porta>` para não depender do IP retornado pelo Rendezvous externo.
 
 ## Objetivos
 

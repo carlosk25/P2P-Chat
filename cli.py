@@ -56,7 +56,7 @@ class CLI:
             return True
 
         if not line.startswith("/"):
-            self.output("Comando invalido. Use /msg, /pub, /peers, /conn, /rtt ou /quit.")
+            self.output("Comando invalido. Use /connect, /msg, /pub, /peers, /conn, /rtt ou /quit.")
             return True
 
         command, _, rest = line.partition(" ")
@@ -72,6 +72,8 @@ class CLI:
                 self._cmd_pub(rest)
             elif command == "/conn":
                 self._cmd_conn()
+            elif command == "/connect":
+                self._cmd_connect(rest)
             elif command == "/rtt":
                 self._cmd_rtt()
             elif command == "/reconnect":
@@ -148,6 +150,41 @@ class CLI:
                     seconds=conn.get("connected_for_seconds", "?"),
                 )
             )
+
+    def _cmd_connect(self, rest: str) -> None:
+        parts = rest.split()
+        if len(parts) != 3:
+            self.output("Uso: /connect <peer_id> <host> <port>")
+            return
+
+        peer_id, host, port_text = parts
+        if "@" not in peer_id:
+            self.output("peer_id invalido. Use o formato nome@namespace.")
+            return
+
+        try:
+            port = int(port_text)
+        except ValueError:
+            self.output("Porta invalida.")
+            return
+
+        name, namespace = peer_id.split("@", 1)
+        self.peer_table.update_from_discovery(
+            [
+                {
+                    "name": name,
+                    "namespace": namespace,
+                    "ip": host,
+                    "port": port,
+                }
+            ]
+        )
+
+        if self.connection_manager.connect_to_peer(peer_id, host, port):
+            self.peer_table.mark_connected(peer_id)
+            self.output(f"Conectado a {peer_id} em {host}:{port}.")
+        else:
+            self.output(f"Nao foi possivel conectar a {peer_id} em {host}:{port}.")
 
     def _cmd_rtt(self) -> None:
         averages = self.keep_alive_manager.get_average_rtt()
