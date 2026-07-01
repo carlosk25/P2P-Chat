@@ -17,7 +17,6 @@ from keep_alive import KeepAliveManager
 from message_router import MessageRouter
 from peer_connection import PeerConnectionManager
 from peer_table import PeerTable
-from state import PeerState
 
 
 log = logging.getLogger("P2PClient")
@@ -33,8 +32,6 @@ class P2PClient:
         self._stop_lock = threading.RLock()
         self._stopped = False
         self._reconnect_lock = threading.RLock()
-        self._discovery_stop_event = threading.Event()
-        self._discovery_thread: threading.Thread | None = None
 
         self.connection_manager = PeerConnectionManager(
             my_peer_id=self.config.peer_id,
@@ -70,13 +67,11 @@ class P2PClient:
         try:
             with self._stop_lock:
                 self._stopped = False
-                self._discovery_stop_event.clear()
 
             actual_port = self.connection_manager.start_server()
             self.config.listen_port = actual_port
             rendezvous_connection.register(self.config)
             self.reconnect(connect_discovered=True)
-            self._start_discovery_loop()
             self.keep_alive_manager.start()
             self.cli.start()
         except KeyboardInterrupt:
@@ -90,14 +85,11 @@ class P2PClient:
             if self._stopped:
                 return
             self._stopped = True
-            self._discovery_stop_event.set()
 
         try:
             self.cli.stop()
         except Exception:
             pass
-
-        self._stop_discovery_loop()
 
         try:
             self.message_router.stop()
@@ -129,7 +121,11 @@ class P2PClient:
             if not connect_discovered:
                 return
 
-            for peer in self.peer_table.get_all():
+            for peer_data in peers:
+                peer_id = f"{peer_data['name']}@{peer_data['namespace']}"
+                peer = self.peer_table.get(peer_id)
+                if peer is None:
+                    continue
                 if peer.peer_id == self.config.peer_id:
                     continue
                 if peer.namespace != self.config.namespace:
@@ -157,52 +153,6 @@ class P2PClient:
                 else:
                     log.warning("Conexao outbound falhou com %s", peer.peer_id)
 
-    def _start_discovery_loop(self) -> None:
-        """Inicia loop daemon de discovery/reconcile se ainda nao existir."""
-        interval = int(self.config.discover_interval)
-        if interval <= 0:
-            log.warning("Discovery/reconcile periodico desativado: intervalo invalido %s", interval)
-            return
-
-        with self._stop_lock:
-            if self._discovery_thread is not None and self._discovery_thread.is_alive():
-                return
-
-            self._discovery_stop_event.clear()
-            self._discovery_thread = threading.Thread(
-                target=self._discovery_loop,
-                name=f"DiscoveryReconcile-{self.config.peer_id}",
-                daemon=True,
-            )
-            self._discovery_thread.start()
-
-        log.info("Discovery/reconcile periodico iniciado (intervalo=%ss)", interval)
-
-    def _stop_discovery_loop(self) -> None:
-        """Sinaliza parada do loop de discovery/reconcile e aguarda encerramento breve."""
-        thread = self._discovery_thread
-        if thread is None:
-            return
-
-        self._discovery_stop_event.set()
-        if thread.is_alive() and threading.current_thread() is not thread:
-            thread.join(timeout=5.0)
-
-        if not thread.is_alive():
-            self._discovery_thread = None
-
-    def _discovery_loop(self) -> None:
-        """Executa discovery/reconcile periodico ate receber sinal de parada."""
-        interval = int(self.config.discover_interval)
-        try:
-            while not self._discovery_stop_event.wait(interval):
-                try:
-                    self.reconnect(connect_discovered=True)
-                except Exception as exc:
-                    log.warning("Falha no discovery/reconcile periodico: %s", exc)
-        finally:
-            log.info("Loop periodico de discovery/reconcile encerrado")
-
     def _on_message(self, peer_id: str, message: dict) -> None:
         """Callback de mensagens P2P; despacha para MessageRouter/KeepAlive e retorna None."""
         message_type = message.get("type")
@@ -215,11 +165,6 @@ class P2PClient:
 
     def _on_connect(self, peer_id: str) -> None:
         """Callback de conexao aberta; chama PeerTable.mark_connected e retorna None."""
-        if self.peer_table.get(peer_id) is None:
-            log.info("Conexao inbound aceita de peer desconhecido: %s", peer_id)
-            self.peer_table.ensure_peer(peer_id, state=PeerState.CONNECTED)
-            return
-
         self.peer_table.mark_connected(peer_id)
 
     def _on_disconnect(self, peer_id: str) -> None:
