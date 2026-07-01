@@ -82,9 +82,7 @@ class PeerTable:
             for data in peer_list:
                 peer_id = f"{data['name']}@{data['namespace']}"
                 if peer_id in self._peers:
-                    # Atualiza dados do Rendezvous sem sobrescrever o estado de conexão
-                    self._peers[peer_id].ip = data["ip"]
-                    self._peers[peer_id].port = data["port"]
+                    # Atualiza tempo de vida sem sobrescrever o estado de conexão
                     self._peers[peer_id].ttl = data.get("ttl", 7200)
                     self._peers[peer_id].expires_in = data.get("expires_in", 0)
                     log.debug("Atualizado: %s", peer_id)
@@ -99,37 +97,6 @@ class PeerTable:
                     )
                     self._peers[peer_id] = peer
                     log.info("Novo peer descoberto: %s", peer)
-
-    def ensure_peer(
-        self,
-        peer_id: str,
-        ip: str = "",
-        port: int = 0,
-        state: PeerState = PeerState.UNKNOWN,
-    ) -> None:
-        """Garante peer na tabela, mesmo quando veio de inbound sem endereco conhecido."""
-        name, sep, namespace = peer_id.partition("@")
-        if not sep or not name or not namespace:
-            log.warning("ensure_peer: peer_id invalido '%s'", peer_id)
-            return
-
-        with self._lock:
-            if peer_id in self._peers:
-                self._peers[peer_id].state = state
-                if ip:
-                    self._peers[peer_id].ip = ip
-                if int(port) > 0:
-                    self._peers[peer_id].port = int(port)
-                return
-
-            self._peers[peer_id] = Peer(
-                name=name,
-                namespace=namespace,
-                ip=ip,
-                port=int(port),
-                state=state,
-            )
-            log.info("Peer registrado sem dados completos de discovery: %s", peer_id)
 
     # ── helpers ───────────────────────────────────────────────────────────────
 
