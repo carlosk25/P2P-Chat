@@ -67,7 +67,7 @@ class P2PClient:
             actual_port = self.connection_manager.start_server()
             self.config.listen_port = actual_port
             rendezvous_connection.register(self.config)
-            self.reconnect(connect_discovered=bool(self.config.autonomous_mode))
+            self.reconnect(connect_discovered=True)
             self.keep_alive_manager.start()
             self.cli.start()
         except KeyboardInterrupt:
