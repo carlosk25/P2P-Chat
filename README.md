@@ -39,7 +39,6 @@ P2PCHAT/
 ├── main.py
 ├── config.py
 ├── rendezvous_connection.py
-├── peer.py
 ├── peer_table.py
 ├── peer_connection.py
 ├── message_router.py
